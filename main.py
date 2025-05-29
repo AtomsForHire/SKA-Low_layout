@@ -82,7 +82,7 @@ def main():
 
     # Go through each station and apply correct rotation then save antenna coordinates
     for i in range(n_stations):
-        Path.mkdir(f"{output_dir}/station{i:03d}")
+        Path.mkdir(Path(f"{output_dir}/station{i:03d}"))
 
         # Get name of station
         station_name = telescope.array_config.names.data[i]
