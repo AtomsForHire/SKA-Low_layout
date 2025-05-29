@@ -48,8 +48,13 @@ def main():
     low_array_file = "./low_array_coords.dat"
 
     # Create output directory
-    telescope_str = "AAstar"
-    output_dir = Path(f"telescope_model_{telescope_str}")
+    telescope_str = "AA0.5"
+    apply_rot = True
+
+    if apply_rot:
+        output_dir = Path(f"telescope_model_{telescope_str}")
+    else:
+        output_dir = Path(f"telescope_model_{telescope_str}_no_rot")
 
     if output_dir.exists() and output_dir.is_dir():
         shutil.rmtree(output_dir)
@@ -83,11 +88,14 @@ def main():
         station_name = telescope.array_config.names.data[i]
         print(f"{i} {station_name}")
 
-        # Apply rotation, returned rotation is angles EAST OF NORTH
+        # Apply rotation relative to s8-1, returned rotation is angles EAST OF NORTH
         # but the "Feed Element Rotation" setting in OKSAR expects counter-clockwise angles (I'm pretty sure)
-        ant_coords, rotation = apply_rotation(low_array_file, station_name)
+        if apply_rot:
+            ant_coords, rotation = apply_rotation(low_array_file, station_name)
+            euler_angle = (90 - rotation) % 360
+        else:  # A hack to not apply rotation
+            ant_coords, rotation = apply_rotation(low_array_file, "S8-1")
 
-        euler_angle = (90 - rotation) % 360
         # euler_angle = 45 # Test feed angle, output beam should be have sidelobes at 45/135 degrees
 
         # Save antenna coordinates
@@ -96,11 +104,10 @@ def main():
                 f.write(f"{row[0]:.5f}, {row[1]:.5f}\n")
 
         # Save rotation to antennas
-        with open(f"{output_dir}/station{i:03d}/feed_angle.txt", "x") as f:
-            for i, _ in enumerate(ant_coords):
-                f.write(f"{euler_angle:.5f}\n")
-
-        # shutil.copy("s8-1.txt", f"{output_dir}/station{i:03d}/layout.txt")
+        if apply_rot:
+            with open(f"{output_dir}/station{i:03d}/feed_angle.txt", "x") as f:
+                for i, _ in enumerate(ant_coords):
+                    f.write(f"{euler_angle:.5f}\n")
 
 
 if __name__ == "__main__":
