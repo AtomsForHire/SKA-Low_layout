@@ -59,7 +59,7 @@ def main():
     if Path(output_dir).exists() and Path(output_dir).is_dir():
         shutil.rmtree(output_dir)
 
-    Path.mkdir(output_dir)
+    Path.mkdir(Path(output_dir))
 
     # Select SKA-Low telescope subarray
     if telescope_str == "AAstar":
