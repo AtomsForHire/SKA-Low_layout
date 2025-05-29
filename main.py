@@ -48,15 +48,15 @@ def main():
     low_array_file = "./low_array_coords.dat"
 
     # Create output directory
-    telescope_str = "AA0.5"
+    telescope_str = "AA2"
     apply_rot = True
 
     if apply_rot:
-        output_dir = Path(f"telescope_model_{telescope_str}")
+        output_dir = f"telescope_model_{telescope_str}"
     else:
-        output_dir = Path(f"telescope_model_{telescope_str}_no_rot")
+        output_dir = f"telescope_model_{telescope_str}_no_rot"
 
-    if output_dir.exists() and output_dir.is_dir():
+    if Path(output_dir).exists() and Path(output_dir).is_dir():
         shutil.rmtree(output_dir)
 
     Path.mkdir(output_dir)
