@@ -88,7 +88,7 @@ def main():
         ant_coords, rotation = apply_rotation(low_array_file, station_name)
 
         euler_angle = (90 - rotation) % 360
-        # euler_angle = 45
+        # euler_angle = 45 # Test feed angle, output beam should be have sidelobes at 45/135 degrees
 
         # Save antenna coordinates
         with open(f"{output_dir}/station{i:03d}/layout.txt", "x") as f:
