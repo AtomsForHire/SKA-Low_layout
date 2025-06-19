@@ -3,8 +3,6 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from astropy import units as u
-from astropy.coordinates import Angle
 from ska_ost_array_config.array_config import LowSubArray
 
 
@@ -48,7 +46,7 @@ def main():
     low_array_file = "./low_array_coords.dat"
 
     # Create output directory
-    telescope_str = "AA2"
+    telescope_str = "AAstar"
     apply_rot = True
 
     if apply_rot:
@@ -63,7 +61,7 @@ def main():
 
     # Select SKA-Low telescope subarray
     if telescope_str == "AAstar":
-        telescope_str == "AA*"
+        telescope_str = "AA*"
     telescope = LowSubArray(subarray_type=telescope_str)
 
     # Save telescope centre in WGS84 coordinates into "position.txt"
@@ -89,7 +87,7 @@ def main():
         print(f"{i} {station_name}")
 
         # Apply rotation relative to s8-1, returned rotation is angles EAST OF NORTH
-        # but the "Feed Element Rotation" setting in OKSAR expects counter-clockwise angles (I'm pretty sure)
+        # but the "Feed Element Rotation" setting in OKSAR expects counter-clockwise angles from the positive x-axis (I'm pretty sure)
         if apply_rot:
             ant_coords, rotation = apply_rotation(low_array_file, station_name)
             euler_angle = (90 - rotation) % 360
