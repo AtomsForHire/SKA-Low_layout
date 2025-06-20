@@ -1,5 +1,6 @@
 import shutil
 from pathlib import Path
+import argparse
 
 import numpy as np
 import pandas as pd
@@ -41,18 +42,52 @@ def apply_rotation(low_array_file: str, station_name: str) -> tuple[np.ndarray, 
     return after_rot, station_rot
 
 
+def input_arguments() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    _ = parser.add_argument(
+        "--no-rot", help="Do not rotate stations or feed elements", action="store_true"
+    )
+    _ = parser.add_argument(
+        "--no-feed-rot",
+        help="Do not rotate feed elements, but do rotate stations",
+        action="store_true",
+    )
+    _ = parser.add_argument(
+        "telescope_str",
+        help="Accepts any of these values: AA0.5, AA1, AA2, AAstar, AA4",
+        type=str,
+    )
+    args = parser.parse_args()
+
+    acceptable_strings = ["AA0.5", "AA1", "AA2", "AAstar", "AA4"]
+    if args.telescope_str not in acceptable_strings:
+        print("Accepted telescope models: AA0.5, AA1, AA2, AAstar, AA4")
+        raise SystemExit(1)
+
+    if args.no_rot and args.no_feed_rot:  # noqa: F821
+        print("Choose either no rotation at all or no feed rotation")
+        raise SystemExit(1)
+
+    print(
+        f"Input settings:\nTelescope: {args.telescope_str}\nDisable all rotation: {args.no_rot}\nDisable feed rotation: {args.no_feed_rot}"
+    )
+    return args
+
+
 def main():
+    args = input_arguments()
     # Load this file for the rotation information for each station
     low_array_file = "./low_array_coords.dat"
 
     # Create output directory
-    telescope_str = "AAstar"
-    apply_rot = True
+    telescope_str = args.telescope_str
 
-    if apply_rot:
-        output_dir = f"telescope_model_{telescope_str}"
-    else:
+    if args.no_rot:
         output_dir = f"telescope_model_{telescope_str}_no_rot"
+    elif args.no_feed_rot:
+        output_dir = f"telescope_model_{telescope_str}_no_feed_rot"
+    else:
+        output_dir = f"telescope_model_{telescope_str}"
 
     if Path(output_dir).exists() and Path(output_dir).is_dir():
         shutil.rmtree(output_dir)
@@ -88,11 +123,11 @@ def main():
 
         # Apply rotation relative to s8-1, returned rotation is angles EAST OF NORTH
         # but the "Feed Element Rotation" setting in OKSAR expects counter-clockwise angles from the positive x-axis (I'm pretty sure)
-        if apply_rot:
+        if args.no_rot:  # Do not apply rotation, therefore pass in S8-1 since every station starts off at S8-1
+            ant_coords, rotation = apply_rotation(low_array_file, "S8-1")
+        else:
             ant_coords, rotation = apply_rotation(low_array_file, station_name)
             euler_angle = (90 - rotation) % 360
-        else:  # A hack to not apply rotation
-            ant_coords, rotation = apply_rotation(low_array_file, "S8-1")
 
         # euler_angle = 45 # Test feed angle, output beam should be have sidelobes at 45/135 degrees
 
@@ -102,7 +137,7 @@ def main():
                 f.write(f"{row[0]:.5f}, {row[1]:.5f}\n")
 
         # Save rotation to antennas
-        if apply_rot:
+        if not (args.no_rot or args.no_feed_rot):
             with open(f"{output_dir}/station{i:03d}/feed_angle.txt", "x") as f:
                 for i, _ in enumerate(ant_coords):
                     f.write(f"{euler_angle:.5f}\n")
